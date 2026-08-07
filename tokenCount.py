@@ -13,7 +13,6 @@ prompt = ("explain me bhagwad geeta shlok on focus , keep it in simple language 
 )
 count = client.models.count_tokens(
     model="gemini-3.6-flash",
-              #config= types.GenerateContentConfig(
     contents = prompt,
 )
 

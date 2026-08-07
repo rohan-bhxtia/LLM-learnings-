@@ -15,9 +15,8 @@ response = client.models.generate_content(
     model="gemini-3.6-flash",
     contents="explain me bhagwad geeta shlok on focus , keep it in simple language and small "
               "just give the shlok and its explanation in 2-3 lines",
-              #config= types.GenerateContentConfig(
-    Config= {
-        "temperature" = 0
+    config= {
+        "temperature":0
     }
 )
 
