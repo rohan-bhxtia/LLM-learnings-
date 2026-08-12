@@ -11,17 +11,11 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MODEL = "gpt-5.1-mini"  # check platform.openai.com/docs/models if this string is outdated
 
-# ===========================================================
-# EXAMPLE 1 — Flat schema: sentiment classification
-# ===========================================================
 
-# Pydantic's `Enum` gives us a *closed* set of allowed values.
-# Under the hood this becomes a JSON Schema "enum" — the model
-# literally cannot output a 4th option like "mixed".
 class Sentiment(str, Enum):
     positive = "positive"
     neutral = "neutral"
-    negative = "negative"
+    negative = "negative" 
 
 # BaseModel = "this Python class also describes a JSON shape."
 # Every attribute becomes a required field in strict mode.
