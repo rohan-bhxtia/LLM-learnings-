@@ -13,20 +13,11 @@ client = genai.Client(api_key=os.getenv("Gemini_API"))
  
 MODEL = "gemini-3.6-flash"  # check ai.google.dev/models if this string is outdated
  
-# ===========================================================
-# EXAMPLE 1 — Flat schema: sentiment classification
-# ===========================================================
- 
-# Same idea as the OpenAI version: a Python Enum becomes a
-# closed set of allowed string values in the generated schema.
 class Sentiment(str, Enum):
     positive = "positive"
     neutral = "neutral"
     negative = "negative"
  
-# A Pydantic BaseModel here plays the exact same role as with OpenAI —
-# it describes the JSON shape you want back. Gemini calls this a
-# "response_schema" instead of "response_format", but the concept is identical.
 class SentimentResult(BaseModel):
     sentiment: Sentiment
     confidence: float
@@ -43,8 +34,7 @@ def classify_sentiment(review: str) -> SentimentResult:
                                                         #    same convenience as OpenAI's .parse()
         ),
     )
-    # response.parsed is Gemini's equivalent of OpenAI's message.parsed —
-    # already validated and turned into a real SentimentResult object.
+
     return response.parsed
  
  
@@ -52,34 +42,34 @@ def classify_sentiment(review: str) -> SentimentResult:
 # EXAMPLE 2 — Nested schema + list: receipt extraction
 # ===========================================================
  
-class LineItem(BaseModel):
-    name: str
-    quantity: int
-    unit_price: float
+# class LineItem(BaseModel):
+#     name: str
+#     quantity: int
+#     unit_price: float
  
-class Receipt(BaseModel):
-    store_name: str
-    date: str
-    items: List[LineItem]
-    subtotal: float
-    tax: float
-    total: float
+# class Receipt(BaseModel):
+#     store_name: str
+#     date: str
+#     items: List[LineItem]
+#     subtotal: float
+#     tax: float
+#     total: float
  
-def extract_receipt(raw_text: str) -> Receipt:
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=raw_text,
-        config=types.GenerateContentConfig(
-            system_instruction=(
-                "Extract structured data from this receipt text. "
-                "If a value truly cannot be determined, make your best estimate — "
-                "every field in the schema is required."
-            ),
-            response_mime_type="application/json",
-            response_schema=Receipt,
-        ),
-    )
-    return response.parsed
+# def extract_receipt(raw_text: str) -> Receipt:
+#     response = client.models.generate_content(
+#         model=MODEL,
+#         contents=raw_text,
+#         config=types.GenerateContentConfig(
+#             system_instruction=(
+#                 "Extract structured data from this receipt text. "
+#                 "If a value truly cannot be determined, make your best estimate — "
+#                 "every field in the schema is required."
+#             ),
+#             response_mime_type="application/json",
+#             response_schema=Receipt,
+#         ),
+#     )
+#     return response.parsed
  
  
 # ===========================================================
@@ -92,18 +82,18 @@ if __name__ == "__main__":
     print(result)
     print("As dict:", result.model_dump())
  
-    receipt_text = """
-    Corner Cafe
-    12 Aug 2026
-    2x Cappuccino  $4.50 each
-    1x Croissant   $3.20
-    Subtotal: $12.20
-    Tax: $1.10
-    Total: $13.30
-    """
-    receipt = extract_receipt(receipt_text)
-    print("\n--- Receipt extraction ---")
-    print(receipt)
-    for item in receipt.items:
-        print(f"  - {item.quantity}x {item.name} @ ${item.unit_price}")
+    # receipt_text = """
+    # Corner Cafe
+    # 12 Aug 2026
+    # 2x Cappuccino  $4.50 each
+    # 1x Croissant   $3.20
+    # Subtotal: $12.20
+    # Tax: $1.10
+    # Total: $13.30
+    # """
+    # receipt = extract_receipt(receipt_text)
+    # print("\n--- Receipt extraction ---")
+    # print(receipt)
+    # for item in receipt.items:
+    #     print(f"  - {item.quantity}x {item.name} @ ${item.unit_price}")
  
