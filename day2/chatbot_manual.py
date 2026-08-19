@@ -28,7 +28,7 @@ def ask(user_text):
             system_instruction=SYSTEM_INSTRUCTION,
             temperature=0.4,
         ),
-    )
+    )#
 
     reply = response.text
     history.append({
