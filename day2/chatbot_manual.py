@@ -19,7 +19,7 @@ def ask(user_text):
         {
         "role": "user",
         "parts": [{"text": user_text}]
-     }
+     }#####
     )
     response = client.models.generate_content(
         model="gemini-3.6-flash",

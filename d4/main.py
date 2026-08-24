@@ -6,7 +6,7 @@ def ask_gemini_stream(prompt: str, system: str = None, max_output_tokens: int = 
     Streams a Gemini reply token-by-token to the console, then returns
     the full accumulated text (for saving into chat history afterward).
     """
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    client = genai.Client(api_key=os.getenv("Gemini_API"))
 
     config = types.GenerateContentConfig(
         temperature=0.7,
