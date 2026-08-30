@@ -3,11 +3,10 @@ from dotenv import load_dotenv
 
 
 from google import genai
-from openai import OpenAI
+
 
 load_dotenv()
 API_key = os.getenv("Gemini_API")
-openai_key = os.getenv("open_ai")
 client = genai.Client(api_key=API_key)
 
 response = client.models.generate_content(
