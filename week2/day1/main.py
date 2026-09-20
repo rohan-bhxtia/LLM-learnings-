@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from prmptLib import CALCULATE_TOOL, calculate
+from week2.day1.calcy import CALCULATE_TOOL, calculate
 
 load_dotenv()
 
