@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from week2.day1.calcy import CALCULATE_TOOL, calculate
+from calcy import CALCULATE_TOOL, calculate
 
 load_dotenv()
 
@@ -15,7 +15,7 @@ client = genai.Client(
 def run_agent(question):
 
     response = client.models.generate_content(
-        model="gemini-3.8-flash",
+        model="gemini-3.6-flash",
         contents=question,
         config=types.GenerateContentConfig(
             tools=[
