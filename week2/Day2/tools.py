@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import currencyapicom
 
 
-
 load_dotenv()
 
 #CALCULATOR TOOL
@@ -71,26 +70,29 @@ weather_tool = {
 def get_weather(city):
 
     API_KEY = os.getenv("Weather_API")
-    params = {
+
+    url = "https://api.openweathermap.org/data/2.5/weather"
+
+    parameters = {
         "q": city,
         "appid": API_KEY,
         "units": "metric"
     }
 
-    response = requests.get(API_KEY, params=params)
+    response = requests.get(url, params=parameters)
 
     data = response.json()
 
     if response.status_code != 200:
         return data.get("message", "Could not get weather")
 
-    return {
-        "city": data["name"],
-        "temperature": data["main"]["temp"],
-        "feels_like": data["main"]["feels_like"],
-        "weather": data["weather"][0]["description"],
-        "humidity": data["main"]["humidity"]
-    }
+    return (
+    f"City: {data['name']}\n"
+    f"Temperature: {data['main']['temp']}°C\n"
+    f"Feels Like: {data['main']['feels_like']}°C\n"
+    f"Weather: {data['weather'][0]['description']}\n"
+    f"Humidity: {data['main']['humidity']}%"
+)
 
 
 # CURRENCY CONVERTER TOOL
@@ -119,10 +121,21 @@ currency_tool = {
 
 
 def convert_currency(amount, from_currency, to_currency):
-# this block is i found in documentation of currency conversion API 
-    client = currencyapicom.Client('Currency_API')
-    result = client.historical('01-01-2022')
-    print(result)
+
+    API_KEY = os.getenv("Currency_API")
+
+    client = currencyapicom.Client(API_KEY)
+
+    result = client.convert(
+        amount,
+        base_currency=from_currency,
+        currencies=[to_currency],
+        )
+
+    return result
 
 
-print(convert_currency())
+#print(calcy(10, 5, "multiply"))
+
+#rint(get_weather("Delhi"))
+print(convert_currency(100, "USD", "INR"))
