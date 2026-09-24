@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from tools import (
+from tool import (
     calculator_tool,
     calcy,
     weather_tool,
@@ -53,7 +53,7 @@ def run_agent(question):
             tool_name = function_call.name
             args = function_call.args
 
-            # Find the actual Python function
+            # Find the actual Python functionss
             tool_function = TOOL_FUNCTIONS[tool_name]
 
             # Execute the tool
@@ -94,8 +94,12 @@ def run_agent(question):
 
 if __name__ == "__main__":
 
-    question = input("You: ")
+    while True:
+        question = input("You: ")
 
-    answer = run_agent(question)
+        if question.lower() == "stop":
+            break
 
-    print("\nGemini:", answer)
+        answer = run_agent(question)
+
+        print("\nGemini:", answer)

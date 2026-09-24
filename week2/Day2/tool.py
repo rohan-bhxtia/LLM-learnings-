@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-import currencyapicom
+
 
 
 load_dotenv()
@@ -93,49 +93,3 @@ def get_weather(city):
     f"Weather: {data['weather'][0]['description']}\n"
     f"Humidity: {data['main']['humidity']}%"
 )
-
-
-# CURRENCY CONVERTER TOOL
-currency_tool = {
-    "name": "convert_currency",
-    "description": "Convert an amount from one currency to another.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "amount": {
-                "type": "number",
-                "description": "Amount to convert"
-            },
-            "from_currency": {
-                "type": "string",
-                "description": "Currency to convert from, such as USD"
-            },
-            "to_currency": {
-                "type": "string",
-                "description": "Currency to convert to, such as INR"
-            }
-        },
-        "required": ["amount", "from_currency", "to_currency"]
-    }
-}
-
-
-def convert_currency(amount, from_currency, to_currency):
-
-    API_KEY = os.getenv("Currency_API")
-
-    client = currencyapicom.Client(API_KEY)
-
-    result = client.convert(
-        amount,
-        base_currency=from_currency,
-        currencies=[to_currency],
-        )
-
-    return result
-
-
-#print(calcy(10, 5, "multiply"))
-
-#rint(get_weather("Delhi"))
-print(convert_currency(100, "USD", "INR"))
