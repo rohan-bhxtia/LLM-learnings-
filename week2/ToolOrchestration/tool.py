@@ -30,7 +30,6 @@ calculator_tool = {
     }
 }
 
-###
 def calcy(a, b, operation):
 
     if operation == "add":
