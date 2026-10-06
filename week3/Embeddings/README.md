@@ -15,8 +15,10 @@ Learning **embeddings**, comparing them with **cosine similarity**, and using th
 ### Setup
 
 ```bash
-pip install numpy sentence-transformers
+pip install -r requirements.txt
 ```
+
+[requirements.txt](requirements.txt) pins `numpy` and `sentence-transformers` (which pulls in `torch` and `transformers`).
 
 Run the scripts from inside this folder so that `from cosine import cosine` works:
 

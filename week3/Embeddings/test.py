@@ -1,4 +1,5 @@
 from semantic_search import semantic_search
+from sentence_transformers import SentenceTransformer
 
 docs = [
     """
@@ -61,14 +62,17 @@ docs = [
     Termination of the agreement does not remove any payment obligations that became due before the termination date.
     """
 ]
+model = SentenceTransformer("all-MiniLM-L6-v2")
+doc_vectors = model.encode(docs)
+
 while True:
     query = input("Ask your question (type 'stop' to quit): ").strip()
     if query.lower() == "stop":
         break
-    if not query:          #we need the code to still running after doing an empty enter press
+    if not query:          #we need the code to still running after doing an empty enter press.
         continue
 
-    for score, doc in semantic_search(docs, query, 1):
+    for score, doc in semantic_search(docs,doc_vectors, query,1):
         print(f"\nScore: {score:.3f}") # this 3f means that i need only 3 numbers after decimal
         print(doc.strip())             # removed faltu ka space 
         print()                        # this print is just for the space between my output and next ques input

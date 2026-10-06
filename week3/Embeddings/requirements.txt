@@ -1,0 +1,6 @@
+# Week 3 — Embeddings
+# Install with: pip install -r requirements.txt
+# Tested with Python 3.14
+
+numpy==2.5.3
+sentence-transformers==6.1.0  # also installs torch and transformers

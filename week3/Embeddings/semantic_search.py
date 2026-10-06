@@ -3,18 +3,11 @@ from cosine import cosine
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-def semantic_search(docs,query,top_k):
+
+def semantic_search(docs,doc_vectors,query,top_k):
+
     results = []
-    # doc_vectors = []
-    # for doc in docs:
-    #     vector = model.encode(doc)
-    #     doc_vectors.append(vector)
-
- # changing above block to Batch Encoding
-    doc_vectors = model.encode(docs)   
-
     query_vector = model.encode(query)    
-
 
 
     for doc,vector in zip(docs, doc_vectors):
