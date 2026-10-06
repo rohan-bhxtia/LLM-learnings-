@@ -5,10 +5,13 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def semantic_search(docs,query,top_k):
     results = []
-    doc_vectors = []
-    for doc in docs:
-        vector = model.encode(doc)
-        doc_vectors.append(vector)
+    # doc_vectors = []
+    # for doc in docs:
+    #     vector = model.encode(doc)
+    #     doc_vectors.append(vector)
+
+ # changing above block to Batch Encoding
+    doc_vectors = model.encode(docs)   
 
     query_vector = model.encode(query)    
 
