@@ -1,40 +1,44 @@
 # Week 3 — Embeddings
 
-Learning **embeddings**, comparing them with **cosine similarity**, and using them to build a small **semantic search**.
+Learning **embeddings**, comparing them with **cosine similarity**, and building an interactive **semantic search** over contract clauses.
 
 ---
 
 ## Files in this folder
 
-| File | What it does |
-|---|---|
-| [cosine.py](cosine.py) | Defines `cosine(a, b)`, a cosine similarity function used by the other scripts. |
-| [embeddings.py](embeddings.py) | Turns two sentences into embeddings and measures how similar they are. |
-| [semantic_search.py](semantic_search.py) | Searches a list of contract clauses by **meaning** and returns the top matches for a question. |
+| File | What it does | Run it? |
+|---|---|---|
+| [cosine.py](cosine.py) | `cosine(a, b)`: cosine similarity between two vectors. | No, it's imported by the others |
+| [emb_learning.py](emb_learning.py) | Embeds two sentences and prints how similar they are. | `python emb_learning.py` |
+| [semantic_search.py](semantic_search.py) | Loads the model and defines `semantic_search()`, which ranks documents against a query. | No, it's imported by `test_run.py` |
+| [test_run.py](test_run.py) | Interactive search: ask questions about a contract and get the most relevant clause. | `python test_run.py` |
+| [requirements.txt](requirements.txt) | Pinned dependencies. | |
+
+```
+cosine.py ◄──── emb_learning.py
+    ▲
+    └────────── semantic_search.py ◄──── test_run.py
+                (loads the model)        (docs + question loop)
+```
 
 ### Setup
 
 ```bash
 pip install -r requirements.txt
+cd week3/Embeddings          # run from here so `from cosine import cosine` works
+python emb_learning.py
+python test_run.py
 ```
 
 [requirements.txt](requirements.txt) pins `numpy` and `sentence-transformers` (which pulls in `torch` and `transformers`).
 
-Run the scripts from inside this folder so that `from cosine import cosine` works:
-
-```bash
-cd week3/Embeddings
-python embeddings.py
-python semantic_search.py
-```
-
-The first run downloads the `all-MiniLM-L6-v2` model (~90 MB) from Hugging Face. You may see `Warning: You are sending unauthenticated requests to the HF Hub`. It's harmless; setting an `HF_TOKEN` environment variable removes it.
+The first run downloads the `all-MiniLM-L6-v2` model (~90 MB). You may see `Warning: You are sending unauthenticated requests to the HF Hub`. It's harmless; setting an `HF_TOKEN` environment variable removes it.
 
 ---
 
 ## 1. What is an embedding?
 
-An **embedding** is a list of numbers (a vector) that represents the *meaning* of something: a word, a sentence, an image, or a document.
+An **embedding** is a list of numbers (a vector) that represents the *meaning* of a piece of text.
 
 ```
 "cat"    -> [0.21, -0.43, 0.88, ..., 0.05]
@@ -42,22 +46,20 @@ An **embedding** is a list of numbers (a vector) that represents the *meaning* o
 "car"    -> [-0.72, 0.15, 0.02, ..., 0.64]
 ```
 
-The model is trained so that **texts with similar meanings get vectors that point in similar directions**. `cat` and `kitten` end up close together; `car` ends up far away.
+The model is trained so that **texts with similar meanings get vectors pointing in similar directions**. `cat` and `kitten` end up close; `car` ends up far away.
 
 | Property | Meaning |
 |---|---|
-| **Dimension** | How many numbers are in each vector. `all-MiniLM-L6-v2` gives **384**. |
-| **Dense** | Almost every value is non-zero, unlike bag-of-words vectors. |
+| **Dimension** | Numbers per vector. `all-MiniLM-L6-v2` gives **384**. |
+| **Dense** | Almost every value is non-zero. |
 | **Semantic** | Distance between vectors reflects difference in meaning. |
-| **Fixed size** | A 3-word sentence and a long paragraph both become 384 numbers. |
+| **Fixed size** | A 3-word sentence and a whole paragraph both become 384 numbers. |
 
 ---
 
 ## 2. Cosine similarity — [cosine.py](cosine.py)
 
 ```python
-import numpy as np
-
 def cosine(a, b):
     similarity = np.dot(a, b) / (
         np.linalg.norm(a) * np.linalg.norm(b)
@@ -65,9 +67,7 @@ def cosine(a, b):
     return similarity
 ```
 
-Formula: `cos(a, b) = (a · b) / (‖a‖ × ‖b‖)`
-
-It measures the **angle** between two vectors and ignores their length:
+`cos(a, b) = (a · b) / (‖a‖ × ‖b‖)` measures the **angle** between two vectors and ignores their length.
 
 | Score | Meaning |
 |---|---|
@@ -75,39 +75,19 @@ It measures the **angle** between two vectors and ignores their length:
 | **0** | Perpendicular (unrelated) |
 | **-1** | Opposite direction |
 
-### Worked example
+Worked example for `a = [1, 2, 3]`, `b = [4, 5, 6]`:
 
-For `a = [1, 2, 3]` and `b = [4, 5, 6]`:
+1. `a · b = 1·4 + 2·5 + 3·6 = 32`
+2. `‖a‖ = √14 ≈ 3.742`, `‖b‖ = √77 ≈ 8.775`
+3. `32 / (3.742 × 8.775) ≈ 0.9746`
 
-1. Dot product: `1·4 + 2·5 + 3·6 = 32`
-2. `‖a‖ = √14 ≈ 3.742`
-3. `‖b‖ = √77 ≈ 8.775`
-4. `32 / (3.742 × 8.775) ≈ 0.9746`
-
-```python
-from cosine import cosine
-cosine([1, 2, 3], [4, 5, 6])   # 0.9746
-cosine([1, 0], [0, 1])         # 0.0   (perpendicular)
-cosine([1, 2], [-1, -2])       # -1.0  (opposite)
-```
-
-### Other similarity measures
-
-| Metric | Formula | Higher means |
-|---|---|---|
-| Cosine similarity | `(a · b) / (‖a‖ · ‖b‖)` | more similar |
-| Dot product | `a · b` | more similar |
-| Euclidean distance | `‖a − b‖` | *less* similar |
-
-> If vectors are **normalized** (length 1), cosine similarity equals the dot product, which is faster to compute.
+> If vectors are **normalized** (length 1), cosine similarity equals the plain dot product.
 
 ---
 
-## 3. Comparing two sentences — [embeddings.py](embeddings.py)
+## 3. Comparing two sentences — [emb_learning.py](emb_learning.py)
 
 ```python
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
 text1 = " python is a programming language"
 text2 = " there is a programming language called python "
 
@@ -125,87 +105,96 @@ similarity:  0.89287615
 
 The sentences are worded differently but mean nearly the same thing, so the score is high.
 
-> **Common mistake:** `cosine(text1, text2)` fails with
-> `ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U47'), ...)`.
-> That error means NumPy was given **strings** instead of numbers. Always compare the **vectors** returned by `model.encode`, not the original text.
+---
+
+## 4. Semantic search — [semantic_search.py](semantic_search.py) + [test_run.py](test_run.py)
+
+### How it works
+
+```
+          ONCE, at startup                       FOR EVERY QUESTION
+┌───────────────────────────────┐    ┌──────────────────────────────────────┐
+│ docs ──► model.encode(docs)   │    │ question ──► model.encode(question)  │
+│          = doc_vectors        │──► │ cosine(question_vector, each doc)    │
+└───────────────────────────────┘    │ sort by score ──► return top_k       │
+                                     └──────────────────────────────────────┘
+```
+
+1. [test_run.py](test_run.py) holds 8 contract clauses in `docs`.
+2. It encodes **all of them once** in a single batch: `doc_vectors = model.encode(docs)`.
+3. In a loop, it reads a question and calls `semantic_search(docs, doc_vectors, query, 1)`.
+4. `semantic_search()` encodes **only the question**, scores it against every stored document vector, sorts the scores and returns the best `top_k`.
+5. Type `stop` (any capitalization) to quit. An empty line just asks again.
+
+**Why encode the documents once?** Encoding is the slow step. With the documents encoded up front, each question costs a single `encode` call, no matter how many documents there are.
+
+**Why import `model` from `semantic_search.py`?** Both files then share one loaded model, instead of loading the same ~90 MB model twice.
+
+### Example session
+
+```
+Ask your question (type 'stop' to quit): how can the vendor exit the contract?
+
+Score: 0.590
+The supplier may terminate this agreement by providing the customer with at least 30 days written notice.
+...
+```
+
+| Question | Top clause | Score |
+|---|---|---|
+| how can the vendor exit the contract? | Termination ("The supplier may terminate…") | 0.590 |
+| when do invoices need to be paid? | Payment ("All invoices… within 45 days") | 0.729 |
+| can staff work from home? | Remote work ("Employees… may work remotely…") | 0.540 |
+| what happens if the supplier leaks our data? | Confidentiality ("must not be disclosed…") | 0.587 |
+
+None of these questions repeat the clause's wording: *vendor/supplier*, *exit/terminate*, *staff/employees*, *work from home/remotely*, *leaks/disclosed*. The model matches on **meaning**, which plain keyword search can't do.
 
 ---
 
-## 4. Semantic search — [semantic_search.py](semantic_search.py)
+## 5. Errors hit while building this (and what they mean)
 
-This script finds the contract clauses most relevant to a question, even when they share no keywords with it.
-
-**How it works:**
-
-1. Embed every document in `docs`.
-2. Embed the `query`.
-3. Score each document with `cosine(query_vector, doc_vector)`.
-4. Sort by score (highest first) and print the top `k` (here `top_k = 2`).
-
-```
-Documents ──► model.encode ──► doc vectors ─┐
-                                            ├──► cosine scores ──► sort ──► top k
-Query ──────► model.encode ──► query vector ┘
-```
-
-Query: `"How can the vendor exit the contract?"`
-
-Output:
-
-```
-0.5370795 The supplier may terminate this agreement with 30 days written notice.
-0.21327396 All invoices must be paid within 45 days of receipt.
-```
-
-The top result contains none of the words *vendor*, *exit*, or *contract*, yet it's clearly the right answer. The model understands that **vendor ≈ supplier**, **exit ≈ terminate**, and **contract ≈ agreement**. A plain keyword search would have missed it.
-
-Notice also the large gap between the first and second scores (0.54 vs 0.21). That's a sign the top match is a confident one.
-
-### Ideas to improve it
-
-- **Encode all documents in one call:** `model.encode(docs)` is faster than a loop.
-- **Normalize vectors:** `model.encode(docs, normalize_embeddings=True)` lets you use `np.dot` instead of full cosine.
-- **Add a score threshold** so unrelated questions return "no good match" instead of the closest bad match.
-- **Use a vector database** (FAISS, Chroma, Qdrant, pgvector) once you have thousands of documents.
-
----
-
-## 5. Where this leads: RAG
-
-Semantic search is the **retrieval** half of **RAG (Retrieval-Augmented Generation)**:
-
-```
-Documents ──► split into chunks ──► embed ──► store in vector DB
-                                                     │
-User question ──► embed ──► find top-k most similar ◄┘
-                                     │
-                                     ▼
-                     send question + chunks to an LLM ──► answer
-```
-
-[semantic_search.py](semantic_search.py) already does everything up to "find top-k". The next step is to pass those top chunks to an LLM as context.
-
-Other uses of embeddings: recommendations, clustering similar texts, finding near-duplicates, and as input features for classifiers.
+| Error | Cause | Fix |
+|---|---|---|
+| `ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U47'), ...)` | Passed **text** to `cosine()`. `<U47` is NumPy's name for a string. | Pass the vectors from `model.encode(...)`. |
+| `ValueError: Modality 'audio' is not supported by this SentenceTransformer model` | Passed **vectors** where `model.encode()` expected **text**, so the model mistook the number arrays for audio. | Encode the text once and give the function the vectors separately. |
+| `NameError: name 'stop' is not defined` | `query == stop` without quotes made Python look for a variable called `stop`. | Compare with the string `"stop"`. |
+| `SyntaxError` on a line ending in `/` | A line can't end mid-expression unless it's inside brackets. | Wrap the expression in `( ... )`. |
 
 ---
 
 ## 6. Gotchas
 
 - **Use the same model** for documents and queries. Vectors from different models can't be compared.
-- **Pass vectors, not strings**, to `cosine`.
 - **Zero vectors** make `cosine` divide by zero and return `nan`.
-- **Chunk long text.** Models have an input length limit and truncate anything beyond it.
-- **Scores are relative.** A "good" score differs between models, so compare results by rank rather than a fixed number.
+- **Long text gets truncated.** Models have an input limit, so split long documents into chunks.
+- **Scores are relative.** Compare results by rank; what counts as a "good" score differs between models.
+- **Re-encode `doc_vectors` whenever `docs` changes**, or results will point at the wrong text.
 
 ---
 
-## 7. Next steps
+## 7. Where this leads: RAG
+
+Semantic search is the **retrieval** step of **RAG (Retrieval-Augmented Generation)**:
+
+```
+Documents ──► chunk ──► embed ──► store
+                                    │
+Question ──► embed ──► top-k match ◄┘ ──► question + top chunks ──► LLM ──► answer
+```
+
+[test_run.py](test_run.py) already does everything up to "top-k match". The next step is sending those clauses to an LLM so it can write the answer in its own words.
+
+---
+
+## 8. Progress
 
 - [x] Write a cosine similarity function
-- [x] Generate real sentence embeddings
-- [x] Build a basic semantic search
-- [ ] Batch-encode documents and normalize vectors
-- [ ] Add a minimum-score threshold
+- [x] Generate sentence embeddings
+- [x] Build semantic search
+- [x] Batch-encode documents once and reuse the vectors
+- [x] Interactive question loop
+- [ ] Return the top 3 results instead of 1
+- [ ] Add a minimum-score threshold ("no good match found")
 - [ ] Store vectors in FAISS or Chroma
 - [ ] Send the top results to an LLM to build a mini RAG app
 

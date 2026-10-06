@@ -1,4 +1,4 @@
-from semantic_search import semantic_search
+from semantic_search import semantic_search , model
 from sentence_transformers import SentenceTransformer
 
 docs = [
@@ -62,7 +62,6 @@ docs = [
     Termination of the agreement does not remove any payment obligations that became due before the termination date.
     """
 ]
-model = SentenceTransformer("all-MiniLM-L6-v2")
 doc_vectors = model.encode(docs)
 
 while True:
