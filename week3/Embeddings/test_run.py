@@ -1,6 +1,4 @@
 from semantic_search import semantic_search , model
-from sentence_transformers import SentenceTransformer
-
 docs = [
     """
     The supplier agrees to provide the services described in this agreement according to the specifications and timelines agreed upon by both parties.
