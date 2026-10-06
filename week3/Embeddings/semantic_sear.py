@@ -27,4 +27,9 @@ query_vector = model.encode(query)
 for doc,vector in zip(docs, doc_vectors):
     score = cosine(query_vector,vector)
     results.append((score,doc))
-    print((score,doc))
+
+results.sort(reverse=True)
+top_k = 2
+
+for score, doc in results[:top_k]:
+      print(score,doc)
