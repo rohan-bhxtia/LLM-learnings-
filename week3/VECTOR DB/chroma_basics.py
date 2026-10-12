@@ -1,10 +1,9 @@
-
 import chromadb
 
 client = chromadb.Client()
 
 first_dataBox = client.get_or_create_collection(
-    name="clause",
+    name="clauses",
     metadata={"hnsw:space": "cosine"}
 )
 
