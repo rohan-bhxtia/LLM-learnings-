@@ -89,6 +89,10 @@ def ingest(pdf_path):
 if __name__ == "__main__":
     ingest(PDF_PATH)
 
-from chromadb.utils import embedding_functions
 
+
+..
+
+# this can show which models are supported by chroma DB
+from chromadb.utils import embedding_functions
 print(dir(embedding_functions))
