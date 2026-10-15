@@ -6,7 +6,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 text1 = " python is a programming language"
-text2 = " there is a programming language called python "
+text2 = " python is a programming languages"
 
 vector1 = model.encode(text1)
 vector2 = model.encode(text2)

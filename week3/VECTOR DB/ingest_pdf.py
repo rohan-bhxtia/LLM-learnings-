@@ -1,35 +1,94 @@
 from pathlib import Path
+import chromadb
+from chromadb.utils import embedding_functions
 from pypdf import PdfReader
 
-PDF_PATH = Path(__file__).parent / "msa.pdf"   # msa.pdf sits next to this script
-
-reader = PdfReader(PDF_PATH)
-
-print("total pages: ", len(reader.pages))
-
-# for page_number, page in enumerate(reader.pages, start=1):
-#     text = page.extract_text()
 
 
-#     print(f"\n=== Page {page_number} ===")
-#     print(text[:500] if text else " No text found")
+# Configuration
+PDF_PATH = Path(__file__).parent / "msa.pdf"
+DB_PATH = Path(__file__).parent / "chroma_db"
+
+COLLECTION = "contracts"
+CHUNK_SIZE = 800
+OVERLAP = 150
+BATCH = 100
 
 
+# Create or open the collection
+def get_collection():
+    client = chromadb.PersistentClient(path=str(DB_PATH))
 
-# chunking
-def chunk_text(text, size=500):
+    ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+
+    collection = client.get_or_create_collection(
+        name=COLLECTION,
+        embedding_function=ef,
+        metadata={"hnsw:space": "cosine"}
+    )
+
+    return collection
+
+
+# Split text into overlapping chunks
+def chunk_text(text, size=CHUNK_SIZE, overlap=OVERLAP):
+    text = " ".join(text.split())
+
     chunks = []
+    start = 0
 
-    for start in range(0, len(text), size):
+    while start < len(text):
         chunk = text[start:start + size]
         chunks.append(chunk)
+        start += size - overlap
 
-    return chunks    
+    return chunks
 
-sample_text = "A" * 1200
-chunks = chunk_text(sample_text)
-##......
-print("Number of chunks:", len(chunks))
-print("First chunk length:", len(chunks[0]))
-print("second chunk length:", len(chunks[1]))
-print("Last chunk length:", len(chunks[2]))
+
+# Read PDF, create records, and store them
+def ingest(pdf_path):
+    collection = get_collection()
+    path = Path(pdf_path)
+
+    ids = []
+    documents = []
+    metadatas = []
+
+    reader = PdfReader(path)
+
+    for page_no, page in enumerate(reader.pages, start=1):
+        text = page.extract_text() or ""
+        chunks = chunk_text(text)
+
+        for i, chunk in enumerate(chunks):
+            ids.append(f"{path.stem}-p{page_no}-c{i}")
+
+            documents.append(chunk)
+
+            metadatas.append({
+                "source": path.name,
+                "page": page_no,
+                "chunk": i
+            })
+
+    for b in range(0, len(ids), BATCH):
+        collection.upsert(
+            ids=ids[b:b + BATCH],
+            documents=documents[b:b + BATCH],
+            metadatas=metadatas[b:b + BATCH]
+        )
+
+    print(f"PDF: {path.name}")
+    print(f"Chunks processed: {len(ids)}")
+    print(f"Total records in collection: {collection.count()}")
+
+
+# Run the ingestion
+if __name__ == "__main__":
+    ingest(PDF_PATH)
+
+from chromadb.utils import embedding_functions
+
+print(dir(embedding_functions))
