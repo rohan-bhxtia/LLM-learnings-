@@ -32,7 +32,7 @@ output = first_dataBox.query(
 print("\n========== QUERY ==========")
 print("Question:", query)
 
-for i in range(len(output["documents"][0])):
+for i in range(len(output["documents"][0])):   # we had [0] here to fetch only first ques , as user can ask multiple ques also
     doc = output["documents"][0][i]
     distance = output["distances"][0][i]
 
@@ -41,30 +41,30 @@ for i in range(len(output["documents"][0])):
     print("Distance:", round(distance, 3))
 
 
-# # GET
-# get_ids = ["clause2"]
+# GET
+get_ids = ["clause2"]
 
-# result = first_dataBox.get(ids=get_ids)
+result = first_dataBox.get(ids=get_ids)
 
-# print("\n========== GET ==========")
-# print("Requested IDs:", get_ids) 
+print("\n========== GET ==========")
+print("Requested IDs:", get_ids) 
 
-# for i in range(len(result["ids"])):
-#     print("ID:", result["ids"][i])
-#     print("Document:", result["documents"][i])
+for i in range(len(result["ids"])):
+    print("ID:", result["ids"][i])
+    print("Document:", result["documents"][i])
 
 
-# # DELETE
-# delete_ids = ["clause2"]
+# DELETE
+delete_ids = ["clause2"]
 
-# count_before = first_dataBox.count()
+count_before = first_dataBox.count()
 
-# first_dataBox.delete(ids=delete_ids)
+first_dataBox.delete(ids=delete_ids)
 
-# print("\n========== DELETE ==========")
-# print("Deleted IDs:", delete_ids)
-# print("Clauses:", count_before, "->", first_dataBox.count())
+print("\n========== DELETE ==========")
+print("Deleted IDs:", delete_ids)
+print("Clauses:", count_before, "->", first_dataBox.count())
 
-# result = first_dataBox.get()
+result = first_dataBox.get()
 
-# print("Remaining IDs:", result["ids"])
+print("Remaining IDs:", result["ids"])
