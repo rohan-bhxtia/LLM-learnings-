@@ -16,8 +16,9 @@ for page in reader.pages:
 # chunking
 chunk_size = 500
 chunks = []
+overlap = 50
 
-for i in range(0, len(full_text), chunk_size):
+for i in range(0, len(full_text), chunk_size-overlap):
     chunk = full_text[i:i + chunk_size]
     chunks.append(chunk)
 
