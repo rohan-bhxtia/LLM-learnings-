@@ -1,25 +1,45 @@
-from pathlib import Path
-from pypdf import PdfReader
 
-BASE_DIR = Path(__file__).parent
-pdf_path = BASE_DIR / "data" / "doc.pdf"
-reader = PdfReader(pdf_path)
+from src.ingestion import extract_text
+from src.chunking import chunk_text
+from src.embeddings import create_embeddings
+from src.vector_store import store_chunks, collection
+from src.retrieval import retrieve_chunks
+from src.generation import generate_answer
 
- # we need entire text from pdf so that we can perform chunking
-full_text = ""   
-for page in reader.pages:
-    text = page.extract_text()
 
-    if text:
-        full_text += text + "\n"
+# Check whether the collection already contains documents
+existing_data = collection.count()
 
-# chunking
-chunk_size = 500
-chunks = []
-overlap = 50
+if existing_data == 0:
+    print("Ingesting PDF...")
 
-for i in range(0, len(full_text), chunk_size-overlap):
-    chunk = full_text[i:i + chunk_size]
-    chunks.append(chunk)
+    full_text = extract_text()
+    chunks = chunk_text(full_text)
+    embeddings = create_embeddings(chunks)
 
-print(chunks)
+    store_chunks(chunks, embeddings)
+
+    print("Total chunks:", len(chunks))
+    print("Total embeddings:", len(embeddings))
+    print("Vector dimensions:", len(embeddings[0]))
+    print("Chunks successfully stored in ChromaDB!")
+
+else:
+    print(f"ChromaDB already contains {existing_data} chunks.")
+
+
+# Question-answering loop
+while True:
+    query = input("\nAsk your question (or type 'quit'): ")
+
+    if query.lower() == "quit":
+        print("Exiting RAG system...")
+        break
+
+    relevant_chunks = retrieve_chunks(query)
+
+    context = "\n\n".join(relevant_chunks)
+
+    answer = generate_answer(query, context)
+
+    print("\nAnswer:", answer)
